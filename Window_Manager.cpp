@@ -3,7 +3,6 @@
 
 
 #include <windows.h>
-#include <iostream> //for debugging
 #include <cmath>
 
 
@@ -90,78 +89,75 @@ vec2d rotate_point (vec2d v, vec2d centre, double angle)
     return {centre.x + new_dx , centre.y + new_dy};
 };
 
+vec3d rotate_point_in_3d (vec3d v, vec3d centre, double ax, double ay, double az)
+{
+    //rotation around x axis
+    vec2d in_yz {v.y, v.z}; 
+    vec2d centre_yz {centre.y, centre.z};
+    vec2d coordinates_in_yz = rotate_point(in_yz, centre_yz, ax); //after rotation 
+
+    //rotation around y axis
+    vec2d in_xz {v.x, coordinates_in_yz.y}; // .y is the z
+    vec2d centre_xz {centre.x, centre.z};
+    vec2d coordinates_in_xz = rotate_point(in_xz, centre_xz, -ay); // '-' because i inverted the y coordinate
+
+    //rotation around z axis
+    vec2d in_xy {coordinates_in_xz.x, coordinates_in_yz.x};
+    vec2d centre_xy = {centre.x, centre.y};
+    vec2d coordinates_in_xy = rotate_point(in_xy, centre_xy, az);
+    vec3d point_after_xyz_rotation {coordinates_in_xy.x, coordinates_in_xy.y, coordinates_in_xz.y};
+
+    return point_after_xyz_rotation;
+};
 
 // The CUBE:
 
-//name points:
+//name angles
+double anglex = 0.0;
+double angley = 0.0;
+double anglez = 0.0;
 
-//front face verticies
-double bottom_left_front_x = 500.0;
-double bottom_left_front_y = 200.0;
-double bottom_left_front_z = 500.0;
+// Centre of the cube
+vec3d cube_centre{650.0, 350.0, 650.0};
 
-double bottom_right_front_x = 800.0;
-double bottom_right_front_y = 200.0;
-double bottom_right_front_z = 500.0;
+// The 8 original 3D vertices
+vec3d cube_vertices[8] = {
 
-double top_left_front_x = 500.0;
-double top_left_front_y = 500.0;
-double top_left_front_z = 500.0;
+    // Front face
+    {500.0, 200.0, 500.0},  // 0 bottom left
+    {800.0, 200.0, 500.0},  // 1 bottom right
+    {800.0, 500.0, 500.0},  // 2 top right
+    {500.0, 500.0, 500.0},  // 3 top left
 
-double top_right_front_x = 800.0;
-double top_right_front_y = 500.0;
-double top_right_front_z = 500.0;
-
-// back face verticies
-double bottom_left_back_x = 500.0;
-double bottom_left_back_y = 200.0;
-double bottom_left_back_z = 800.0;
-
-double bottom_right_back_x = 800.0;
-double bottom_right_back_y = 200.0;
-double bottom_right_back_z = 800.0;
-
-double top_left_back_x = 500.0;
-double top_left_back_y = 500.0;
-double top_left_back_z = 800.0;
-
-double top_right_back_x = 800.0;
-double top_right_back_y = 500.0;
-double top_right_back_z = 800.0;
+    // Back face
+    {500.0, 200.0, 800.0},  // 4 bottom left
+    {800.0, 200.0, 800.0},  // 5 bottom right
+    {800.0, 500.0, 800.0},  // 6 top right
+    {500.0, 500.0, 800.0}   // 7 top left
+};
 
 
-//front face lines vertecies:
+// The 12 edges of the cube
+int cube_edges[12][2] = {
 
-vec3d bottom_left_front_vertex_3d {bottom_left_front_x, bottom_left_front_y, bottom_left_front_z};
-vec3d top_left_front_vertex_3d {top_left_front_x, top_left_front_y, top_left_front_z};
-vec3d bottom_right_front_vertex_3d {bottom_right_front_x, bottom_right_front_y, bottom_right_front_z};
-vec3d top_right_front_vertex_3d {top_right_front_x, top_right_front_y, top_right_front_z};
+    // Front face
+    {0, 1},
+    {1, 2},
+    {2, 3},
+    {3, 0},
 
-//back face lines vertecies:
+    // Back face
+    {4, 5},
+    {5, 6},
+    {6, 7},
+    {7, 4},
 
-vec3d bottom_left_back_vertex_3d {bottom_left_back_x, bottom_left_back_y, bottom_left_back_z};
-vec3d top_left_back_vertex_3d {top_left_back_x, top_left_back_y, top_left_back_z};
-vec3d bottom_right_back_vertex_3d {bottom_right_back_x, bottom_right_back_y, bottom_right_back_z};
-vec3d top_right_back_vertex_3d {top_right_back_x, top_right_back_y, top_right_back_z};
-
-
-// convert all verticies to 2d
-
-//front face lines 2d verticies:
-
-vec2d bottom_left_front_vertex_2d = project_3d_to_2d(bottom_left_front_vertex_3d);
-vec2d top_left_front_vertex_2d = project_3d_to_2d(top_left_front_vertex_3d);
-
-vec2d bottom_right_front_vertex_2d = project_3d_to_2d(bottom_right_front_vertex_3d);
-vec2d top_right_front_vertex_2d = project_3d_to_2d(top_right_front_vertex_3d);
-
-//back face lines 2d verticies:
-
-vec2d bottom_left_back_vertex_2d = project_3d_to_2d(bottom_left_back_vertex_3d);
-vec2d top_left_back_vertex_2d = project_3d_to_2d(top_left_back_vertex_3d);
-
-vec2d bottom_right_back_vertex_2d = project_3d_to_2d(bottom_right_back_vertex_3d);
-vec2d top_right_back_vertex_2d = project_3d_to_2d(top_right_back_vertex_3d);
+    // Connecting edges
+    {0, 4},
+    {1, 5},
+    {2, 6},
+    {3, 7}
+};
 
 
 // Custom window procedure (for everything except msg == WM_DESTROY)
@@ -178,55 +174,35 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
         ClearWindow(hwnd, hdc);
 
-            // Store all 8 projected cube vertices
-            vec2d cube_vertices[8] = {
-                bottom_left_front_vertex_2d,   // 0
-                bottom_right_front_vertex_2d,  // 1
-                top_right_front_vertex_2d,     // 2
-                top_left_front_vertex_2d,      // 3
+        // Store the projected vertices here
+        vec2d projected_vertices[8];
 
-                bottom_left_back_vertex_2d,    // 4
-                bottom_right_back_vertex_2d,   // 5
-                top_right_back_vertex_2d,      // 6
-                top_left_back_vertex_2d        // 7
-            };
+        // Rotate and project all 8 vertices
+        for (int i = 0; i < 8; i++) {
 
-            // Define the 12 connections
-            int cube_edges[12][2] = {
+            vec3d rotated = rotate_point_in_3d(
+                cube_vertices[i],
+                cube_centre,
+                anglex, angley, anglez
+            );
 
-                // Front face
-                {0, 1},
-                {1, 2},
-                {2, 3},
-                {3, 0},
+            projected_vertices[i] = project_3d_to_2d(rotated);
+        }
 
-                // Back face
-                {4, 5},
-                {5, 6},
-                {6, 7},
-                {7, 4},
+        // Draw all 12 edges
+        for (int i = 0; i < 12; i++) {
 
-                // Connect front and back faces
-                {0, 4},
-                {1, 5},
-                {2, 6},
-                {3, 7}
-            };
+            int start = cube_edges[i][0];
+            int end = cube_edges[i][1];
 
-            // Draw all 12 edges
-            for (int i = 0; i < 12; i++) {
-
-                int start = cube_edges[i][0];
-                int end = cube_edges[i][1];
-
-                DrawLine(hdc,
-                    static_cast<int>(cube_vertices[start].x),
-                    static_cast<int>(cube_vertices[start].y),
-                    static_cast<int>(cube_vertices[end].x),
-                    static_cast<int>(cube_vertices[end].y),
-                    RGB(0, 255, 0),
-                    3);
-            }
+            DrawLine(hdc,
+                static_cast<int>(projected_vertices[start].x),
+                static_cast<int>(projected_vertices[start].y),
+                static_cast<int>(projected_vertices[end].x),
+                static_cast<int>(projected_vertices[end].y),
+                RGB(0, 255, 0),
+                3);
+        }
 
         EndPaint(hwnd, &ps);
 
@@ -234,19 +210,15 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     }
     if (msg == WM_TIMER)
     {
-        /*
-        //for square
-        square_angle += 3;
-        // just to keep the angle small (trig funcs work with larger ones too)
-        if (square_angle >= 360.0) {
-            square_angle -= 360.0;
-        }
+        //for rotating cube
+        anglex += 1.5;
+        angley += 2.5;
+        anglez += 1.0;
 
-        for (int i = 0; i < 4; i++) {
-            rotated_square_points[i] =
-                rotate_point(square_points[i], square_centre, square_angle);
-        }
-        */
+        // just to keep the angles small (trig funcs work with larger ones too)
+        if (anglex >= 360.0) anglex -= 360.0;
+        if (angley >= 360.0) angley -= 360.0;
+        if (anglez >= 360.0) anglez -= 360.0;
 
         InvalidateRect(hwnd, NULL, FALSE); // InvalidateRect() tells Windows that your window needs repainting
         return 0;
@@ -270,7 +242,7 @@ int main(){
 
     // HWND is a datatype
     HWND hwnd = CreateWindowW(L"Window class",
-        L"Spinning line",
+        L"Spinning Cube",
         WS_OVERLAPPEDWINDOW,
         120,
         60,
@@ -282,8 +254,6 @@ int main(){
         NULL);
     
     ShowWindow(hwnd, SW_SHOW);
-
-    std::cout << "Started...";
 
     SetTimer(hwnd, 1, 16, NULL);
 
