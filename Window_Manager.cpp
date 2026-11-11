@@ -1,5 +1,6 @@
 // run using '.\Window_Manager.exe' by first 'cd .\3dEngine' and not simple run button (it deletes the exe)
 // To build: g++ Window_Manager.cpp -o Window_Manager.exe -lgdi32 -luser32
+// NEXT: Impliment movement by changing the observer's coordinates
 
 
 #include <windows.h>
