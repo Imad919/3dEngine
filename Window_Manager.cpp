@@ -1,6 +1,6 @@
 // run using '.\Window_Manager.exe' by first 'cd .\3dEngine' and not simple run button (it deletes the exe)
 // To build: g++ Window_Manager.cpp -o Window_Manager.exe -lgdi32 -luser32
-// ***fix the connection by using variables***
+
 
 #include <windows.h>
 #include <iostream> //for debugging
@@ -90,84 +90,79 @@ vec2d rotate_point (vec2d v, vec2d centre, double angle)
     return {centre.x + new_dx , centre.y + new_dy};
 };
 
-//THE TWO WALLS
 
-//all have same length in 2d
-// Shared coordinates
-const double left_x = 300.0;
-const double right_x = 1020.0;
-const double middle_x = 660.0;
+// The CUBE:
 
-const double bottom_y = 100.0;
-const double top_y = 600.0;
+//name points:
 
-const double left_z = 700.0;
-const double right_z = 700.0;
-const double middle_z = 500.0;
+//front face verticies
+double bottom_left_front_x = 500.0;
+double bottom_left_front_y = 200.0;
+double bottom_left_front_z = 500.0;
 
-// Line left
-vec3d line_point1 {left_x, bottom_y, left_z};
-vec3d line_point2 {left_x, top_y, left_z};
+double bottom_right_front_x = 800.0;
+double bottom_right_front_y = 200.0;
+double bottom_right_front_z = 500.0;
 
-// Line right
-vec3d line2_point1 {right_x, bottom_y, right_z};
-vec3d line2_point2 {right_x, top_y, right_z};
+double top_left_front_x = 500.0;
+double top_left_front_y = 500.0;
+double top_left_front_z = 500.0;
 
-// Line middle
-vec3d line3_point1 {middle_x, bottom_y, middle_z};
-vec3d line3_point2 {middle_x, top_y, middle_z};
+double top_right_front_x = 800.0;
+double top_right_front_y = 500.0;
+double top_right_front_z = 500.0;
 
-// Bottom left to bottom middle
-vec3d line4_point1 {left_x, bottom_y, left_z};
-vec3d line4_point2 {middle_x, bottom_y, middle_z};
+// back face verticies
+double bottom_left_back_x = 500.0;
+double bottom_left_back_y = 200.0;
+double bottom_left_back_z = 800.0;
 
-// Top left to top middle
-vec3d line5_point1 {left_x, top_y, left_z};
-vec3d line5_point2 {middle_x, top_y, middle_z};
+double bottom_right_back_x = 800.0;
+double bottom_right_back_y = 200.0;
+double bottom_right_back_z = 800.0;
 
-// Top right to top middle
-vec3d line6_point1 {right_x, top_y, right_z};
-vec3d line6_point2 {middle_x, top_y, middle_z};
+double top_left_back_x = 500.0;
+double top_left_back_y = 500.0;
+double top_left_back_z = 800.0;
 
-// Bottom right to bottom middle
-vec3d line7_point1 {right_x, bottom_y, right_z};
-vec3d line7_point2 {middle_x, bottom_y, middle_z};
+double top_right_back_x = 800.0;
+double top_right_back_y = 500.0;
+double top_right_back_z = 800.0;
 
-// Project all endpoints into 2D
 
-vec2d line_point1_2d = project_3d_to_2d(line_point1);
-vec2d line_point2_2d = project_3d_to_2d(line_point2);
+//front face lines vertecies:
 
-vec2d line2_point1_2d = project_3d_to_2d(line2_point1);
-vec2d line2_point2_2d = project_3d_to_2d(line2_point2);
+vec3d bottom_left_front_vertex_3d {bottom_left_front_x, bottom_left_front_y, bottom_left_front_z};
+vec3d top_left_front_vertex_3d {top_left_front_x, top_left_front_y, top_left_front_z};
+vec3d bottom_right_front_vertex_3d {bottom_right_front_x, bottom_right_front_y, bottom_right_front_z};
+vec3d top_right_front_vertex_3d {top_right_front_x, top_right_front_y, top_right_front_z};
 
-vec2d line3_point1_2d = project_3d_to_2d(line3_point1);
-vec2d line3_point2_2d = project_3d_to_2d(line3_point2);
+//back face lines vertecies:
 
-vec2d line4_point1_2d = project_3d_to_2d(line4_point1);
-vec2d line4_point2_2d = project_3d_to_2d(line4_point2);
+vec3d bottom_left_back_vertex_3d {bottom_left_back_x, bottom_left_back_y, bottom_left_back_z};
+vec3d top_left_back_vertex_3d {top_left_back_x, top_left_back_y, top_left_back_z};
+vec3d bottom_right_back_vertex_3d {bottom_right_back_x, bottom_right_back_y, bottom_right_back_z};
+vec3d top_right_back_vertex_3d {top_right_back_x, top_right_back_y, top_right_back_z};
 
-vec2d line5_point1_2d = project_3d_to_2d(line5_point1);
-vec2d line5_point2_2d = project_3d_to_2d(line5_point2);
 
-vec2d line6_point1_2d = project_3d_to_2d(line6_point1);
-vec2d line6_point2_2d = project_3d_to_2d(line6_point2);
+// convert all verticies to 2d
 
-vec2d line7_point1_2d = project_3d_to_2d(line7_point1);
-vec2d line7_point2_2d = project_3d_to_2d(line7_point2);
+//front face lines 2d verticies:
 
-/*
-//building spinning square
-double square_angle = 0.0;
-vec2d square_centre{600.0,300.0};
-vec2d square_points[4] = { //an array of vec2ds
-    {500.0, 400.0},
-    {700.0, 400.0},
-    {700.0, 200.0},
-    {500.0, 200.0}
-};
-vec2d rotated_square_points[4]; // given value immediately in main
-*/
+vec2d bottom_left_front_vertex_2d = project_3d_to_2d(bottom_left_front_vertex_3d);
+vec2d top_left_front_vertex_2d = project_3d_to_2d(top_left_front_vertex_3d);
+
+vec2d bottom_right_front_vertex_2d = project_3d_to_2d(bottom_right_front_vertex_3d);
+vec2d top_right_front_vertex_2d = project_3d_to_2d(top_right_front_vertex_3d);
+
+//back face lines 2d verticies:
+
+vec2d bottom_left_back_vertex_2d = project_3d_to_2d(bottom_left_back_vertex_3d);
+vec2d top_left_back_vertex_2d = project_3d_to_2d(top_left_back_vertex_3d);
+
+vec2d bottom_right_back_vertex_2d = project_3d_to_2d(bottom_right_back_vertex_3d);
+vec2d top_right_back_vertex_2d = project_3d_to_2d(top_right_back_vertex_3d);
+
 
 // Custom window procedure (for everything except msg == WM_DESTROY)
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -182,45 +177,60 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         HDC hdc = BeginPaint(hwnd, &ps);
 
         ClearWindow(hwnd, hdc);
-        
-        /*
-        for (int i = 0; i < 4; i++) {
 
-        int next = (i + 1) % 4; // 1, 2, 3 then 0
+            // Store all 8 projected cube vertices
+            vec2d cube_vertices[8] = {
+                bottom_left_front_vertex_2d,   // 0
+                bottom_right_front_vertex_2d,  // 1
+                top_right_front_vertex_2d,     // 2
+                top_left_front_vertex_2d,      // 3
 
-        DrawLine(hdc,
-            static_cast<int>(rotated_square_points[i].x),
-            static_cast<int>(rotated_square_points[i].y),
-            static_cast<int>(rotated_square_points[next].x),
-            static_cast<int>(rotated_square_points[next].y),
-            RGB(0, 255, 0),
-            3);
-        }
-        */
+                bottom_left_back_vertex_2d,    // 4
+                bottom_right_back_vertex_2d,   // 5
+                top_right_back_vertex_2d,      // 6
+                top_left_back_vertex_2d        // 7
+            };
 
-        vec2d projected_lines[7][2] = {
-            {line_point1_2d, line_point2_2d},
-            {line2_point1_2d, line2_point2_2d},
-            {line3_point1_2d, line3_point2_2d},
-            {line4_point1_2d, line4_point2_2d},
-            {line5_point1_2d, line5_point2_2d},
-            {line6_point1_2d, line6_point2_2d},
-            {line7_point1_2d, line7_point2_2d}
-        };
+            // Define the 12 connections
+            int cube_edges[12][2] = {
 
-        for (int i = 0; i < 7; i++) {
-            DrawLine(hdc,
-                static_cast<int>(projected_lines[i][0].x),
-                static_cast<int>(projected_lines[i][0].y),
-                static_cast<int>(projected_lines[i][1].x),
-                static_cast<int>(projected_lines[i][1].y),
-                RGB(0, 255, 0),
-                3);
-        }
+                // Front face
+                {0, 1},
+                {1, 2},
+                {2, 3},
+                {3, 0},
+
+                // Back face
+                {4, 5},
+                {5, 6},
+                {6, 7},
+                {7, 4},
+
+                // Connect front and back faces
+                {0, 4},
+                {1, 5},
+                {2, 6},
+                {3, 7}
+            };
+
+            // Draw all 12 edges
+            for (int i = 0; i < 12; i++) {
+
+                int start = cube_edges[i][0];
+                int end = cube_edges[i][1];
+
+                DrawLine(hdc,
+                    static_cast<int>(cube_vertices[start].x),
+                    static_cast<int>(cube_vertices[start].y),
+                    static_cast<int>(cube_vertices[end].x),
+                    static_cast<int>(cube_vertices[end].y),
+                    RGB(0, 255, 0),
+                    3);
+            }
 
         EndPaint(hwnd, &ps);
 
-    return 0;
+        return 0;
     }
     if (msg == WM_TIMER)
     {
@@ -273,13 +283,6 @@ int main(){
     
     ShowWindow(hwnd, SW_SHOW);
 
-    /*
-    for (int i = 0; i < 4; i++) { // for safe measure (not needed)
-    rotated_square_points[i] =
-        rotate_point(square_points[i], square_centre, square_angle);
-    }
-    */
-
     std::cout << "Started...";
 
     SetTimer(hwnd, 1, 16, NULL);
@@ -292,4 +295,4 @@ int main(){
     }; 
     
     return 0;
-};
+}
