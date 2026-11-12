@@ -69,6 +69,10 @@ vec2d project_3d_to_2d(vec3d point3d)
     double dy = point3d.y - observer.y;
     double dz = point3d.z - observer.z;
 
+    if (dz < 0)
+    {
+        return {-123456, -123456}; // arbitrary coordinates used in the before the drawline calls
+    }
     return {
         660.0 + scale * dx / dz,
         350.0 - scale * dy / dz
@@ -194,6 +198,12 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
             int start = cube_edges[i][0];
             int end = cube_edges[i][1];
+            
+            if (projected_vertices[start].x == -123456 ||
+                projected_vertices[end].x == -123456)
+            {
+                continue;
+            }
 
             DrawLine(hdc,
                 static_cast<int>(projected_vertices[start].x),
@@ -223,6 +233,35 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         InvalidateRect(hwnd, NULL, FALSE); // InvalidateRect() tells Windows that your window needs repainting
         return 0;
     }   
+    if (msg == WM_KEYDOWN)
+    {
+        switch (wParam)
+        {
+            case 'W':
+                observer.z += 10;
+                break;
+
+            case 'A':
+                observer.x -= 10;
+                break;
+
+            case 'S':
+                observer.z -= 10;
+                break;
+
+            case 'D':
+                observer.x += 10;
+                break;
+
+            case VK_DOWN:
+                observer.y -= 10; // in this project +y is up
+                break;
+
+            case VK_UP:
+                observer.y += 10;
+                break;
+        }
+    }
     return DefWindowProcW(hwnd, msg, wParam, lParam);
 };
 
