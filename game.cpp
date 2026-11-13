@@ -1,5 +1,5 @@
 // run using '.\game.exe' by first 'cd .\3dEngine' and not simple run button (it deletes the exe)
-// To build: g++ -mconsole Game.cpp Window_Manager.cpp -o Game.exe -lgdi32 -luser32
+// To build: g++ -mconsole Game.cpp 3dRenderer.cpp -o Game.exe -lgdi32 -luser32
 
 
 
@@ -27,6 +27,8 @@ struct wireframe_cuboid {
 struct observer {
     vec3d location;
     double projection_scale;
+    double yaw;
+    double pitch;
 };
 
 
@@ -44,12 +46,16 @@ void rotate_wireframe_cuboid(wireframe_cuboid& a, double r_around_x, double r_ar
 
 void move_observer(observer& camera, WPARAM key);
 
+void rotate_camera(observer& camera, WPARAM key);
+
 
 // GAME OBJECTS
 
 observer player {
     {660, 350, 0},
-    400
+    400,
+    0.0,
+    0.0
 };
 
 wireframe_cuboid cuboid1 {
@@ -86,7 +92,8 @@ void GameUpdate()
 // Called when a key is pressed
 void GameHandleKeyDown(WPARAM key)
 {
-    move_observer(player, key);
+    move_observer(player, key); // using w a s d space f (moves relative to the camera)
+    rotate_camera(player, key); // using arrow keys
 }
 
 

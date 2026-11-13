@@ -75,28 +75,12 @@ struct wireframe_cuboid {
 struct observer {
     vec3d location;
     double projection_scale;
+    double yaw;
+    double pitch;
 };
 
 
-vec2d give_3d_to_2d_coordinates(vec3d point3d, observer p)
-{
-    double scale = p.projection_scale;
-
-    double dx = point3d.x - p.location.x;
-    double dy = point3d.y - p.location.y;
-    double dz = point3d.z - p.location.z;
-
-    if (dz <= 10.0)
-    {
-        return {-123456, -123456}; // arbitrary coordinates used in the before the drawline calls
-    }
-    return {
-        660.0 + scale * dx / dz,
-        350.0 - scale * dy / dz
-    };
-}
-
-vec2d rotated_point_coordinates (vec2d v, vec2d centre, double angle)
+vec2d rotated_point_in_2d_coordinates (vec2d v, vec2d centre, double angle)
 {
     double dx = v.x - centre.x;
     double dy = v.y - centre.y;
@@ -110,22 +94,63 @@ vec2d rotated_point_coordinates (vec2d v, vec2d centre, double angle)
     return {centre.x + new_dx , centre.y + new_dy};
 };
 
+
+vec2d give_3d_to_2d_coordinates(vec3d point3d, observer p)
+{
+    double scale = p.projection_scale;
+
+    double dx = point3d.x - p.location.x; // observer coordinaties are now the origin
+    double dy = point3d.y - p.location.y;
+    double dz = point3d.z - p.location.z;
+
+    vec2d xz_point {dx, dz};
+    vec2d camera_origin_xz {0.0, 0.0};
+
+    vec2d yaw_result = rotated_point_in_2d_coordinates(
+    xz_point, camera_origin_xz, p.yaw
+    );
+
+    double new_dx = yaw_result.x;
+    double new_dz = yaw_result.y;
+
+    vec2d yz_point {dy, new_dz};
+    vec2d camera_origin_yz {0.0, 0.0};
+
+    vec2d pitch_result = rotated_point_in_2d_coordinates(
+    yz_point, camera_origin_yz, p.pitch
+    );
+
+    double new_dy = pitch_result.x;
+    double final_dz = pitch_result.y;
+
+    if (final_dz <= 10.0)
+    {
+        return {-123456, -123456}; // arbitrary coordinates used in the before the drawline calls
+    }
+
+    return {
+        660.0 + scale * new_dx / final_dz,
+        350.0 - scale * new_dy / final_dz
+    };
+}
+
+
 vec3d rotate_point_in_3d_coordinates (vec3d v, vec3d centre, double ax, double ay, double az)
 {
     //rotation around x axis
     vec2d in_yz {v.y, v.z}; 
     vec2d centre_yz {centre.y, centre.z};
-    vec2d coordinates_in_yz = rotated_point_coordinates(in_yz, centre_yz, ax); //after rotation 
+    vec2d coordinates_in_yz = rotated_point_in_2d_coordinates(in_yz, centre_yz, ax); //after rotation 
 
     //rotation around y axis
     vec2d in_xz {v.x, coordinates_in_yz.y}; // .y is the z
     vec2d centre_xz {centre.x, centre.z};
-    vec2d coordinates_in_xz = rotated_point_coordinates(in_xz, centre_xz, -ay); // '-' because i inverted the y coordinate
+    vec2d coordinates_in_xz = rotated_point_in_2d_coordinates(in_xz, centre_xz, -ay); // '-' because i inverted the y coordinate
 
     //rotation around z axis
     vec2d in_xy {coordinates_in_xz.x, coordinates_in_yz.x};
     vec2d centre_xy = {centre.x, centre.y};
-    vec2d coordinates_in_xy = rotated_point_coordinates(in_xy, centre_xy, az);
+    vec2d coordinates_in_xy = rotated_point_in_2d_coordinates(in_xy, centre_xy, az);
     vec3d point_after_xyz_rotation {coordinates_in_xy.x, coordinates_in_xy.y, coordinates_in_xz.y};
 
     return point_after_xyz_rotation;
@@ -218,31 +243,79 @@ void rotate_wireframe_cuboid (wireframe_cuboid& a, double r_around_x, double r_a
 
 void move_observer(observer& camera, WPARAM key)
 {
+    double yaw = camera.yaw * 3.141592653589793 / 180.0;
+    double pitch = camera.pitch * 3.141592653589793 / 180.0;
+
+    // Camera forward direction
+    double forward_x = std::cos(pitch) * std::sin(yaw);
+    double forward_y = std::sin(pitch);
+    double forward_z = std::cos(pitch) * std::cos(yaw);
+
+    // Camera right direction
+    double right_x = std::cos(yaw);
+    double right_z = -std::sin(yaw);
+
+    double speed = 10.0;
+
     switch (key)
     {
         case 'W':
-            camera.location.z += 10;
-            break;
-
-        case 'A':
-            camera.location.x -= 10;
+            camera.location.x += forward_x * speed;
+            camera.location.y += forward_y * speed;
+            camera.location.z += forward_z * speed;
             break;
 
         case 'S':
-            camera.location.z -= 10;
+            camera.location.x -= forward_x * speed;
+            camera.location.y -= forward_y * speed;
+            camera.location.z -= forward_z * speed;
             break;
 
         case 'D':
-            camera.location.x += 10;
+            camera.location.x += right_x * speed;
+            camera.location.z += right_z * speed;
             break;
 
+        case 'A':
+            camera.location.x -= right_x * speed;
+            camera.location.z -= right_z * speed;
+            break;
+
+        case VK_SPACE:
+            camera.location.y += speed;
+            break;
+
+        case 'F':
+            camera.location.y -= speed;
+            break;
+    }
+}
+
+void rotate_camera(observer& camera, WPARAM key)
+{
+    switch (key)
+    {
+        case VK_RIGHT:
+            camera.yaw += 2.0;
+            break;
+
+        case VK_LEFT:
+            camera.yaw -= 2.0;
+        break;
+
         case VK_UP:
-            camera.location.y += 10;
+            if (camera.pitch <= 89.0)
+            {
+                camera.pitch += 2.0;
+            }
             break;
 
         case VK_DOWN:
-            camera.location.y -= 10;
-            break;
+            if (camera.pitch >= -89.0)
+            {
+                camera.pitch -= 2.0;
+            }
+        break;
     }
 }
 
