@@ -66,7 +66,6 @@ struct wireframe_cuboid {
     double angley;
     double anglez;
 
-    vec3d cuboid_centre;
     double length;
     double width;
     double height;
@@ -77,6 +76,12 @@ struct observer {
     double projection_scale;
     double yaw;
     double pitch;
+};
+
+struct world {
+    double border_x;
+    double border_y;
+    double border_z;
 };
 
 
@@ -156,76 +161,87 @@ vec3d rotate_point_in_3d_coordinates (vec3d v, vec3d centre, double ax, double a
     return point_after_xyz_rotation;
 }
 
-void draw_wireframe_cuboid (HDC hdc, wireframe_cuboid c, observer p)
-{
-    double left   = c.cuboid_centre.x - c.length / 2.0;
-    double right  = c.cuboid_centre.x + c.length / 2.0;
+void draw_wireframe_cuboid (HDC hdc, wireframe_cuboid& c, double cuboid_centre_x, double cuboid_centre_y, double cuboid_centre_z, 
+    double rotation_centre_x, double rotation_centre_y, double rotation_centre_z, observer p, world w)
+{   
+    if ((cuboid_centre_x < w.border_x) && (cuboid_centre_y < w.border_y) && (cuboid_centre_z < w.border_z)
+        && (cuboid_centre_x > -w.border_x) && (cuboid_centre_y > -w.border_y) && (cuboid_centre_z > -w.border_z)) 
+    { 
+        double left   = cuboid_centre_x - c.length / 2.0;
+        double right  = cuboid_centre_x + c.length / 2.0;
 
-    double bottom = c.cuboid_centre.y - c.width / 2.0;
-    double top    = c.cuboid_centre.y + c.width / 2.0;
+        double bottom = cuboid_centre_y - c.width / 2.0;
+        double top    = cuboid_centre_y + c.width / 2.0;
 
-    double front  = c.cuboid_centre.z - c.height / 2.0;
-    double back   = c.cuboid_centre.z + c.height / 2.0;
+        double front  = cuboid_centre_z - c.height / 2.0;
+        double back   = cuboid_centre_z + c.height / 2.0;
 
-    vec3d vertices[8] = {
-    // Front face
-    {left,  bottom, front}, // 0
-    {right, bottom, front}, // 1
-    {right, top,    front}, // 2
-    {left,  top,    front}, // 3
+        vec3d vertices[8] = {
+        // Front face
+        {left,  bottom, front}, // 0
+        {right, bottom, front}, // 1
+        {right, top,    front}, // 2
+        {left,  top,    front}, // 3
 
-    // Back face
-    {left,  bottom, back},  // 4
-    {right, bottom, back},  // 5
-    {right, top,    back},  // 6
-    {left,  top,    back}   // 7
-    };
+        // Back face
+        {left,  bottom, back},  // 4
+        {right, bottom, back},  // 5
+        {right, top,    back},  // 6
+        {left,  top,    back}   // 7
+        };
 
-    int edges[12][2] = {
-    // Front face
-    {0, 1}, {1, 2}, {2, 3}, {3, 0},
+        int edges[12][2] = {
+        // Front face
+        {0, 1}, {1, 2}, {2, 3}, {3, 0},
 
-    // Back face
-    {4, 5}, {5, 6}, {6, 7}, {7, 4},
+        // Back face
+        {4, 5}, {5, 6}, {6, 7}, {7, 4},
 
-    // Connecting edges
-    {0, 4}, {1, 5}, {2, 6}, {3, 7}
-    };
+        // Connecting edges
+        {0, 4}, {1, 5}, {2, 6}, {3, 7}
+        };
 
-    // Store the projected vertices here
-    vec2d projected_vertices[8];
+        // Store the projected vertices here
+        vec2d projected_vertices[8];
 
-    // Rotate and project all 8 vertices
-    for (int i = 0; i < 8; i++) {
+        vec3d rotation_centre {
+            rotation_centre_x,
+            rotation_centre_y,
+            rotation_centre_z
+        };
 
-        vec3d rotated = rotate_point_in_3d_coordinates(
-            vertices[i],
-            c.rotation_centre,
-            c.anglex, c.angley, c.anglez
-        );
+        // Rotate and project all 8 vertices
+        for (int i = 0; i < 8; i++) {
 
-        projected_vertices[i] = give_3d_to_2d_coordinates(rotated, p);
-    }
+            vec3d rotated = rotate_point_in_3d_coordinates(
+                vertices[i],
+                rotation_centre,
+                c.anglex, c.angley, c.anglez
+            );
 
-    // Draw all 12 edges
-    for (int i = 0; i < 12; i++) {
-
-        int start = edges[i][0];
-        int end = edges[i][1];
-        
-        if (projected_vertices[start].x == -123456 ||
-            projected_vertices[end].x == -123456)
-        {
-            continue;
+            projected_vertices[i] = give_3d_to_2d_coordinates(rotated, p);
         }
 
-        DrawLine(hdc,
-            static_cast<int>(projected_vertices[start].x),
-            static_cast<int>(projected_vertices[start].y),
-            static_cast<int>(projected_vertices[end].x),
-            static_cast<int>(projected_vertices[end].y),
-            RGB(0, 255, 0),
-            3);
+        // Draw all 12 edges
+        for (int i = 0; i < 12; i++) {
+
+            int start = edges[i][0];
+            int end = edges[i][1];
+            
+            if (projected_vertices[start].x == -123456 ||
+                projected_vertices[end].x == -123456)
+            {
+                continue;
+            }
+
+            DrawLine(hdc,
+                static_cast<int>(projected_vertices[start].x),
+                static_cast<int>(projected_vertices[start].y),
+                static_cast<int>(projected_vertices[end].x),
+                static_cast<int>(projected_vertices[end].y),
+                RGB(255, 0, 0),
+                3);
+        }
     }
 }
 
@@ -241,7 +257,7 @@ void rotate_wireframe_cuboid (wireframe_cuboid& a, double r_around_x, double r_a
         if (a.anglez >= 360.0) a.anglez -= 360.0;
 }
 
-void move_observer(observer& camera, WPARAM key)
+void move_observer(observer& camera, WPARAM key) // finds the coordinates of the point the camera is facing
 {
     double yaw = camera.yaw * 3.141592653589793 / 180.0;
     double pitch = camera.pitch * 3.141592653589793 / 180.0;
